@@ -10,9 +10,6 @@ IntroScene::IntroScene(DGLGame *game)
         : Scene(game) {
 }
 
-IntroScene::~IntroScene() {
-}
-
 void IntroScene::loadScene() {
     buildGameObjects();
     initGameState();
@@ -24,21 +21,13 @@ void IntroScene::loadScene() {
     mGame->flushTicks();
 }
 
-void IntroScene::pause() {
-}
-
-void IntroScene::resume() {
+void IntroScene::backPressed() {
+    mGame->triggerTerminate();
 }
 
 void IntroScene::surfaceCreated() {
     loadDrawList();
     buildShaders();
-}
-
-void IntroScene::surfaceDestroyed() {
-}
-
-void IntroScene::preTicks() {
 }
 
 void IntroScene::tick() {
@@ -105,29 +94,12 @@ void IntroScene::touchInput(eInputEvent event, Vector2 &pos) {
 
     switch (event)
     {
-        case INPUT_EVENT_TOUCH_DOWN:
-            mTouchStartPos = pos;
-            mTouchActive = true;
-            break;
-
         case INPUT_EVENT_TOUCH_UP:
-            mTouchCurrPos = pos;
-            mTouchActive = false;
-            mGestureEvent = true;
             mState = STATE_FADEOUT;
             break;
-
-        case INPUT_EVENT_TOUCH_MOVE:
-            mTouchCurrPos = pos;
-            mTouchEvent = true;
-            break;
-
         default:
             break;
     }
-}
-
-void IntroScene::rotationInput(double azimuth, double pitch, double roll) {
 }
 
 void IntroScene::buildGameObjects() {

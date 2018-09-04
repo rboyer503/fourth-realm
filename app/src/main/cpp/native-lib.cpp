@@ -55,6 +55,13 @@ Java_com_derelictvesseldev_fourthrealm_MainActivity_native_1onResume(JNIEnv *env
 }
 
 JNIEXPORT void JNICALL
+Java_com_derelictvesseldev_fourthrealm_MainActivity_native_1onBackPressed(JNIEnv *env,
+                                                                          jobject instance) {
+    //LOGD("ONBACKPRESSED");
+    (*game).onBackPressed();
+}
+
+JNIEXPORT void JNICALL
 Java_com_derelictvesseldev_fourthrealm_RendererWrapper_native_1onSurfaceCreated(JNIEnv *env,
                                                                                 jobject instance,
                                                                                 jobjectArray bitmaps,
@@ -130,11 +137,11 @@ Java_com_derelictvesseldev_fourthrealm_GameSurfaceView_native_1surfaceDestroyed_
     (*game).onSurfaceDestroyed();
 }
 
-JNIEXPORT void JNICALL
+JNIEXPORT jboolean JNICALL
 Java_com_derelictvesseldev_fourthrealm_RendererWrapper_native_1onDrawFrame(JNIEnv *env,
                                                                            jclass type) {
     //LOGD("ONDRAWFRAME");
-    (*game).onTick();
+    return static_cast<jboolean>((*game).onTick());
 }
 
 JNIEXPORT void JNICALL

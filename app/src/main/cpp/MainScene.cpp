@@ -19,12 +19,10 @@ constexpr int MAX_DIR = 6;
 
 MainScene::MainScene(DGLGame *game)
         : Scene(game),
-          mHUDFrameMapInfo({Vector2(0.125f, 0.125f), 8, 8}) {
+          mHUDFrameMapInfo({Vector2(0.125f, 0.125f), 8, 8}),
+          mButtonsFrameMapInfo({Vector2(0.5f, 0.125f), 2, 8}) {
     initSounds();
     initTextObjects();
-}
-
-MainScene::~MainScene() {
 }
 
 void MainScene::loadScene() {
@@ -63,15 +61,36 @@ void MainScene::pause() {
 void MainScene::resume() {
 }
 
+void MainScene::backPressed() {
+    for (auto &buttonObject : mButtonObjects)
+        (*mButtonDrawList).addGameObject(buttonObject);
+
+    addTouchable(mButtonObjects[0]);
+    addTouchable(mButtonObjects[1]);
+
+    mGame->onPause(true);
+}
+
 void MainScene::surfaceCreated() {
     loadDrawList();
     buildShaders();
 }
 
-void MainScene::surfaceDestroyed() {
-}
-
 void MainScene::preTicks() {
+    if (mCancelExit)
+    {
+        mCancelExit = false;
+        mGame->backPressHandled();
+        mGame->onResume(true);
+
+        removeTouchable(mButtonObjects[0]);
+        removeTouchable(mButtonObjects[1]);
+        (*mButtonDrawList).removeAllGameObjects();
+    }
+
+    if (mGame->isPaused())
+        return;
+
     // Input management.
     if (mGestureEvent)
     {
@@ -98,7 +117,6 @@ void MainScene::preTicks() {
                     for (int i = 0; i < mSoundMetadataVec.size(); ++i)
                         mGame->setSoundVolume(i, mVolume);
 
-                    /*
                     mGlobalTone.alpha += 0.05;
                     if (mGlobalTone.alpha >= 1.0f)
                         mGlobalTone.alpha = 1.0f;
@@ -124,7 +142,6 @@ void MainScene::preTicks() {
                     for (int i = 0; i < mSoundMetadataVec.size(); ++i)
                         mGame->setSoundVolume(i, mVolume);
 
-                    /*
                     mGlobalTone.alpha -= 0.05;
                     if (mGlobalTone.alpha < 0.0f)
                         mGlobalTone.alpha = 0.0f;
@@ -156,65 +173,44 @@ void MainScene::preTicks() {
             if (!processed)
             {
                 uint32_t dir;
-                if ((mTouchStartPos.y > 0.7f) && (mTouchStartPos.x < -0.75f))
+                //if ((mTouchStartPos.y > 0.7f) && (mTouchStartPos.x < -0.75f))
+                if (mTouchStartPos.y > 0.5f)
                 {
-                    BasicSingle32<uint32_t> *numSparks = dynamic_cast<BasicSingle32<uint32_t> *>(mGame->getGameState()[FR_GS_NUM_SPARKS].get());
-                    uint32_t numSparksData = numSparks->getData();
-                    if (numSparksData)
-                    {
-                        --numSparksData;
-                        numSparks->setData(numSparksData);
-                        mParticles[HELPER_SPARK]->setPosition(mCurrPos);
-                        mParticles[HELPER_SPARK]->setIntensity(1.0f);
-                        mParticles[HELPER_SPARK]->setActive(true);
-
-                        mPointLightColor[0] = mBaselineColors[HELPER_SPARK].red;
-                        mPointLightColor[1] = mBaselineColors[HELPER_SPARK].green;
-                        mPointLightColor[2] = mBaselineColors[HELPER_SPARK].blue;
-
-                        mTextObjects[0]->updateText(std::to_string(numSparksData));
-                    }
+                    mActiveMotion = MOTION_EVENT_BACKWARD;
+                    dir = Maze::getOppositeWall(mCurrFacing);
                 }
                 else
                 {
-                    if (mTouchStartPos.y > 0.5f)
+                    mActiveMotion = MOTION_EVENT_FORWARD;
+                    dir = mCurrFacing;
+                }
+
+                if ((*mMaze).getMazeMatrix()->at(mCurrRoom) & dir)
+                {
+                    mActiveMotion = MOTION_EVENT_NONE;
+                }
+                else
+                {
+                    switch (dir)
                     {
-                        mActiveMotion = MOTION_EVENT_BACKWARD;
-                        dir = Maze::getOppositeWall(mCurrFacing);
-                    }
-                    else
-                    {
-                        mActiveMotion = MOTION_EVENT_FORWARD;
-                        dir = mCurrFacing;
-                    }
+                        case Maze::MAZE_FRONT:
+                            mMotionTarget = mCurrPos.z - mRoomOffset.x;
+                            break;
 
-                    if ((*mMaze).getMazeMatrix()->at(mCurrRoom) & dir)
-                    {
-                        mActiveMotion = MOTION_EVENT_NONE;
-                    }
-                    else
-                    {
-                        switch (dir)
-                        {
-                            case Maze::MAZE_FRONT:
-                                mMotionTarget = mCurrPos.z - mRoomOffset.x;
-                                break;
+                        case Maze::MAZE_BACK:
+                            mMotionTarget = mCurrPos.z + mRoomOffset.x;
+                            break;
 
-                            case Maze::MAZE_BACK:
-                                mMotionTarget = mCurrPos.z + mRoomOffset.x;
-                                break;
+                        case Maze::MAZE_RIGHT:
+                            mMotionTarget = mCurrPos.x + mRoomOffset.x;
+                            break;
 
-                            case Maze::MAZE_RIGHT:
-                                mMotionTarget = mCurrPos.x + mRoomOffset.x;
-                                break;
+                        case Maze::MAZE_LEFT:
+                            mMotionTarget = mCurrPos.x - mRoomOffset.x;
+                            break;
 
-                            case Maze::MAZE_LEFT:
-                                mMotionTarget = mCurrPos.x - mRoomOffset.x;
-                                break;
-
-                            default:
-                                break;
-                        }
+                        default:
+                            break;
                     }
                 }
             }
@@ -223,6 +219,9 @@ void MainScene::preTicks() {
 }
 
 void MainScene::tick() {
+    if (mGame->isPaused())
+        return;
+
     switch (mState)
     {
         case STATE_FADEIN:
@@ -496,29 +495,14 @@ void MainScene::render() {
         (*mHUDDrawList).draw();
     }
     GraphicsIntf->SetBlend(BLEND_MODE_NONE);
-}
 
-void MainScene::touchInput(eInputEvent event, Vector2 &pos) {
-    switch (event)
+    (*mButtonDrawList).updateBuffers();
+    if (!(*mButtonDrawList).isEmpty())
     {
-        case INPUT_EVENT_TOUCH_DOWN:
-            mTouchStartPos = pos;
-            mTouchActive = true;
-            break;
-
-        case INPUT_EVENT_TOUCH_UP:
-            mTouchCurrPos = pos;
-            mTouchActive = false;
-            mGestureEvent = true;
-            break;
-
-        case INPUT_EVENT_TOUCH_MOVE:
-            mTouchCurrPos = pos;
-            mTouchEvent = true;
-            break;
-
-        default:
-            break;
+        (*mHUDShaderProgram).useProgram();
+        (*mHUDShaderProgram).setUniforms(mGame->getTextureIds()[FR_IMAGE_ASSET_BUTTONS]);
+        (*mButtonDrawList).bindData(*mHUDShaderProgram);
+        (*mButtonDrawList).draw();
     }
 }
 
@@ -556,6 +540,40 @@ void MainScene::initSounds() {
             {"Drums3.raw",        SOUND_CLASS_BACKTRACK_SHORT, 0, 1.0f},
             {"Bells5.raw",        SOUND_CLASS_NORMAL,          0, 1.0f},
     };
+}
+
+bool MainScene::handleSparkButton() {
+    if (mGame->isPaused())
+        return true;
+
+    BasicSingle32<uint32_t> *numSparks = dynamic_cast<BasicSingle32<uint32_t> *>(mGame->getGameState()[FR_GS_NUM_SPARKS].get());
+    uint32_t numSparksData = numSparks->getData();
+    if (numSparksData)
+    {
+        --numSparksData;
+        numSparks->setData(numSparksData);
+        mParticles[HELPER_SPARK]->setPosition(mCurrPos);
+        mParticles[HELPER_SPARK]->setIntensity(1.0f);
+        mParticles[HELPER_SPARK]->setActive(true);
+
+        mPointLightColor[0] = mBaselineColors[HELPER_SPARK].red;
+        mPointLightColor[1] = mBaselineColors[HELPER_SPARK].green;
+        mPointLightColor[2] = mBaselineColors[HELPER_SPARK].blue;
+
+        mTextObjects[0]->updateText(std::to_string(numSparksData));
+    }
+
+    return true;
+}
+
+bool MainScene::handleCancelButton() {
+    mCancelExit = true;
+    return true;
+}
+
+bool MainScene::handleQuitButton() {
+    mGame->triggerTerminate();
+    return true;
 }
 
 void MainScene::initTextObjects() {
@@ -707,8 +725,24 @@ void MainScene::buildGameObjects() {
     mHUDBackObjects.push_back(
             std::make_shared<SpriteObject>(&mHUDFrameMapInfo,
                                            Vector3(-0.98f, -0.925f, FRGC_HUD_LAYER_REAR),
-                                           Vector2(0.2f, 0.1f), WHITE));
+                                           Vector2(0.2f, 0.1f), WHITE,
+                                           [&] { return handleSparkButton(); }));
+    addTouchable(mHUDBackObjects[0]);
     mHUDBackObjects[0]->setFrame(1);
+
+    mButtonObjects.push_back(
+            std::make_shared<SpriteObject>(&mButtonsFrameMapInfo,
+                                           Vector3(-0.3f, -0.05f, FRGC_HUD_LAYER_FRONT),
+                                           Vector2(0.25f, 0.15f), WHITE,
+                                           [&] { return handleCancelButton(); }));
+    mButtonObjects[0]->setFrame(0);
+
+    mButtonObjects.push_back(
+            std::make_shared<SpriteObject>(&mButtonsFrameMapInfo,
+                                           Vector3(0.05f, -0.05f, FRGC_HUD_LAYER_FRONT),
+                                           Vector2(0.25f, 0.15f), WHITE,
+                                           [&] { return handleQuitButton(); }));
+    mButtonObjects[1]->setFrame(1);
 }
 
 void MainScene::destroyGameObjects() {
@@ -716,6 +750,7 @@ void MainScene::destroyGameObjects() {
     mParticles.clear();
     mHUDObjects.clear();
     mHUDBackObjects.clear();
+    mButtonObjects.clear();
     mForceDelta = Vector3();
 }
 
@@ -813,6 +848,13 @@ void MainScene::loadDrawList() {
     for (auto &hudObject : mHUDBackObjects)
         (*mHUDBackDrawList).addGameObject(hudObject);
     (*mHUDBackDrawList).buildBuffers();
+
+    mButtonDrawList.reset(new DrawList({ATTR_POSITION, ATTR_COLOR, ATTR_TEXTUREUV}, true));
+
+    if (mGame->isPaused())
+        for (auto &buttonObject : mButtonObjects)
+            (*mButtonDrawList).addGameObject(buttonObject);
+    //(*mButtonDrawList).buildBuffers();
 }
 
 void MainScene::updateViewMatrix() {

@@ -30,17 +30,17 @@ import android.view.SurfaceHolder;
 public class GameSurfaceView extends GLSurfaceView {
     private final RendererWrapper mRenderer;
 
-    public GameSurfaceView(Context context) {
+    public GameSurfaceView(Context context, Context activityContext) {
         super(context);
         setEGLContextClientVersion(2);
-        mRenderer = new RendererWrapper(context);
+        mRenderer = new RendererWrapper(context, activityContext);
         setRenderer(mRenderer);
     }
 
-    public GameSurfaceView(Context context, AttributeSet attrs) {
+    public GameSurfaceView(Context context, Context activityContext, AttributeSet attrs) {
         super(context, attrs);
         setEGLContextClientVersion(2);
-        mRenderer = new RendererWrapper(context);
+        mRenderer = new RendererWrapper(context, activityContext);
         setRenderer(mRenderer);
     }
 

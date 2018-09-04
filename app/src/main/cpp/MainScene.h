@@ -44,11 +44,13 @@ class MainScene : public Scene
     particle_object_vec mParticles;
     sprite_vec mHUDObjects;
     sprite_vec mHUDBackObjects;
+    sprite_vec mButtonObjects;
     Vector3 mForceDelta;
     std::unique_ptr<DrawList> mDrawList;
     std::unique_ptr<ParticleDrawList> mParticleDrawList;
     std::unique_ptr<DrawList> mHUDDrawList;
     std::unique_ptr<DrawList> mHUDBackDrawList;
+    std::unique_ptr<DrawList> mButtonDrawList;
     std::unique_ptr<WallShaderProgram> mWallShaderProgram;
     std::unique_ptr<ParticleShaderProgram> mParticleShaderProgram;
     std::unique_ptr<SpriteShaderProgram> mHUDShaderProgram;
@@ -58,6 +60,7 @@ class MainScene : public Scene
     bool mUpdateView = true;
     text_object_vec mTextObjects;
     const SpriteFrameMapInfo mHUDFrameMapInfo;
+    const SpriteFrameMapInfo mButtonsFrameMapInfo;
     DGLColor mGlobalTone = {1.0f, 1.0f, 1.0f, 0.0f};
     DGLColor mLevelColor = {0.25f, 0.25f, 1.0f, 1.0f};
     const DGLColor mBaselineColors[3] = {
@@ -77,36 +80,34 @@ class MainScene : public Scene
     Vector2 mRoomOffset;
     Vector2 mRoomSize{5.0f, 4.0f};
     float mVolume = 1.0f;
+    bool mCancelExit = false;
 
     // Input state.
-    Vector2 mTouchStartPos;
-    Vector2 mTouchCurrPos;
-    bool mTouchActive = false;
-    bool mTouchEvent = false;
-    bool mGestureEvent = false;
     bool mRotationCalibrated = false;
     double mInitRotation[3];
     double mCurrRotation[3];
 
 public:
     MainScene(DGLGame *game);
-    ~MainScene();
 
     // Inherited from Scene
     void loadScene() override;
     void unloadScene() override;
     void pause() override;
     void resume() override;
+    void backPressed() override;
     void surfaceCreated() override;
-    void surfaceDestroyed() override;
     void preTicks() override;
     void tick() override;
     void postTicks() override;
     void render() override;
-    void touchInput(eInputEvent event, Vector2 &pos) override;
     void rotationInput(double azimuth, double pitch, double roll) override;
 
     void initSounds() override;
+
+    bool handleSparkButton();
+    bool handleCancelButton();
+    bool handleQuitButton();
 
 private:
     void initTextObjects();

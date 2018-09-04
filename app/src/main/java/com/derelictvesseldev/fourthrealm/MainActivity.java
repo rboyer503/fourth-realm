@@ -31,7 +31,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         mRotationVectorSensor = mSensorManager.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR);
 
         // Create basic surface for game display and handling touch events.
-        mView = new GameSurfaceView(getApplication());
+        mView = new GameSurfaceView(getApplication(), this);
         setContentView(mView);
 
         // Make sure device doesn't go to sleep on us.
@@ -61,6 +61,11 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         native_onResume();
     }
 
+    @Override
+    public void onBackPressed() {
+        native_onBackPressed();
+    }
+
     public void onSensorChanged(SensorEvent event) {
         if (event.sensor.getType() == Sensor.TYPE_ROTATION_VECTOR) {
             SensorManager.getRotationMatrixFromVector(mRotationMatrix, event.values);
@@ -85,6 +90,8 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     private native void native_onPause();
 
     private native void native_onResume();
+
+    private native void native_onBackPressed();
 
     private native void native_onRotationInput(double azimuth, double pitch, double roll);
 }

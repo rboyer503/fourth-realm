@@ -30,29 +30,17 @@ class IntroScene : public Scene
     Vector3 mCurrPos;
     float mCurrAngle;
 
-    // Input state.
-    Vector2 mTouchStartPos;
-    Vector2 mTouchCurrPos;
-    bool mTouchActive = false;
-    bool mTouchEvent = false;
-    bool mGestureEvent = false;
-
 public:
     IntroScene(DGLGame *game);
-    ~IntroScene();
 
     // Inherited from Scene
     void loadScene() override;
-    void pause() override;
-    void resume() override;
+    void backPressed() override;
     void surfaceCreated() override;
-    void surfaceDestroyed() override;
-    void preTicks() override;
     void tick() override;
     void postTicks() override;
     void render() override;
     void touchInput(eInputEvent event, Vector2 &pos) override;
-    void rotationInput(double azimuth, double pitch, double roll) override;
 
 private:
     void buildGameObjects();
