@@ -1,38 +1,25 @@
-#built application files
-*.apk
-*.ap_
-
-# files for the dex VM
-*.dex
-
-# Java class files
-*.class
-
-# generated files
-bin/
-gen/
+# Built application files
+/*/build/
+/*/.cxx/
 
 # Local configuration file (sdk path, etc)
 local.properties
 
-# Windows thumbnail db
-Thumbs.db
+# Gradle generated files
+.gradle/
 
-# OSX files
-.DS_Store
+# Signing files
+.signing/
 
-# Android Studio
+# User-specific configurations
+/.idea
 *.iml
-.idea/workspace.xml
-.gradle
-build/
-.navigation
-captures/
-output.json
 
-# NDK
-obj/
-.externalNativeBuild
-
-# Backup files
-backup/
+# OS-specific files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db

@@ -24,10 +24,10 @@ target_link_libraries( native-lib
                        oboe
                        )
 
-set (OBOE_DIR C:/Users/Rob/AndroidStudioProjects/oboe/oboe-master)
+set (OBOE_DIR C:/Users/Rob/AndroidStudioProjects/oboe)
 add_subdirectory (${OBOE_DIR} ./oboe-bin)
 include_directories (${OBOE_DIR}/include)
 
-set (DGL_DIR C:/Users/Rob/AndroidStudioProjects/DerelictGL)
+set (DGL_DIR C:/Users/Rob/AndroidStudioProjects/derelict-gl)
 add_subdirectory (${DGL_DIR} ./dgl-bin)
 include_directories (${DGL_DIR}/include/dgl)
